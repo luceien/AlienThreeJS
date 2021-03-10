@@ -1,0 +1,28 @@
+{
+  "name": "luceien.github.io",
+  "version": "1.0.0",
+  "description": "**Este proyecto tiene fines exclusivamente docentes**   \r El proyecto incluye material extraído del proyecto público [Three.js](http://threjs.org) *r96*, bibliotecas de utilidad del texto *\"WebGL Programming Guide\" de  Kouichi Matsuda y Rodger Lea* y código propio de *<rvivo@upv.es>*.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luceien/luceien.github.io.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/luceien/luceien.github.io/issues"
+  },
+  "homepage": "https://github.com/luceien/luceien.github.io#readme",
+  "dependencies": {
+    "@types/jquery": "^3.5.5",
+    "three": "^0.126.1",
+    "three-legacyjsonloader": "^1.0.6"
+  }
+}

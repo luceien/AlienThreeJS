@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title> ThreeJs App </title>
+    <style>
+        body {
+            background-color: #000;
+            margin: 0px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id = "container"></div>
+    <script src="../lib/three.min_r96.js"></script>
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
+
+    <!-- Scripts de biblioteca -->
+    <script src="../lib/three.min.js"></script>
+    <script src="../lib/Coordinates.js"></script>
+    <script src="../lib/OrbitControls.js"></script>
+    <script src="../lib/stats.min.js"></script>
+    <script src="../lib/dat.gui.min.js"></script>
+    
+
+    <script>
+
+        var renderer, scene, camera, mesh;
+        var angulo = 0;
+        var cameraControls;
+
+        function init() {
+                    renderer = new THREE.WebGLRenderer();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setClearColor( "#e5e5e5", 1.0);
+                    document.body.appendChild( renderer.domElement);
+
+
+                    // To resize the screen
+                    window.addEventListener('resize', () => {
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                    })
+
+                    scene = new THREE.Scene();
+
+                    camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100);
+                    camera.position.set(0, 1, 5);
+
+                    cameraControls = new THREE.OrbitControls( camera, renderer.domElement );
+	                cameraControls.target.set( 0, 0, 0 );                }
+
+        function load_parapluie() {
+
+            var ambientLight = new THREE.AmbientLight( 0x222222 );
+            scene.add( ambientLight );
+            var luz = new THREE.PointLight( 0xFFFFFF, 0.9 );
+            luz.position.set( -2, 2, 2 );
+            scene.add( luz );
+
+            var mate = new THREE.MeshLambertMaterial( { color: 0xFAAFAA, shading: THREE.SmoothShading } );
+            var brillante = new THREE.MeshPhongMaterial( { color: 0xFAAFAA, specular: 0xFAAFAA, shininess: 40 } );
+
+            var tela = new THREE.Mesh( new THREE.CylinderGeometry(0.0, 1.0, 1.0), mate);
+            tela.scale.set(2, 0.5, 2);
+            tela.position.y = 1.5;
+
+
+            var baston = new THREE.Mesh( new THREE.CylinderGeometry(1, 1, 1), brillante);
+            baston.position.y = 0.5;
+            baston.scale.set(0.05, 3, 0.05);
+
+            var mango = new THREE.Mesh( new THREE.CubeGeometry(1, 1, 1), brillante);
+            mango.scale.set(0.2, 0.4, 0.2);
+            mango.position.set(0, -1, 0);
+
+            mesh = new THREE.Object3D();
+
+            mesh.add(tela);
+            mesh.add(baston);
+            mesh.add(mango);
+            mesh.rotation.x = Math.PI/6;
+
+            scene.add( mesh );
+
+        }
+
+        function update() {
+                angulo += 0.01;
+                mesh.rotation.y= angulo;
+        }
+
+        function render() {
+
+            // Permet de modifier la position de l'objet avec la souris :
+            requestAnimationFrame( render );
+
+            update();
+            cameraControls.update();
+            renderer.render( scene, camera );
+        }
+
+        init();
+        load_parapluie();
+        render();
+
+
+    </script>
+    
+</body>
+</html>

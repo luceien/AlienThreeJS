@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+    <link rel="stylesheet" href="css\style.css">
+    <title>¿Seguro?</title>
+
+    <!--<style>
+        body{
+            touch-action: none;
+            position: absolute }
+    </style> -->
+
+</head>
+
+<body>
+    
+    <div id = "container"></div>
+
+    <script src="lib/three.min.js"></script>
+    <script src="lib/three.min_r96.js"></script>
+    <script src = "lib/TrackballControls.js"></script>
+    <script src="lib/dat.gui.min.js"></script>
+
+    <!--<script src = "lib/OrbitControls.js"></script>-->
+    
+    <script type="module">
+        
+        //import * as THREE from './lib/three.module.js';
+        import Stats from './lib/stats.module.js';
+
+
+        let zoompos = - 50, minzoomspeed = .01;
+        let zoomspeed =   minzoomspeed;
+        let scene, stat;
+        var cameraControls;
+        let none = '';
+
+        var options = {
+            zoompos_: -50,
+            minzoomspeed_: .01,
+            zoomspeed_: .01,    
+            trigger: false,
+
+            reset: function() {
+                this.trigger = true;
+                this.zoompos_ = -50;
+                this.minzoomspeed_ = .01;
+                this.zoomspeed_ = minzoomspeed_ },
+
+            Volver: function() {
+                window.location.replace('/choix.html'); }
+            };
+
+        const elements = [ 
+            { size: 1, label:"La Luna - 3 470 km", image: "moonmap1k.jpg", bumpMap : 'moonbump1K.jpg', color:'0x808b96'},
+            { size: 1.9, label :"Mars - 6 779 km", image: 'mars.jpg', bumpMap : none, color:'0xcd6155'},
+            { size: 3.64, label: "La Tierra - 12 800 km", image: 'earthmap1k.jpg', bumpMap:'elev_bump_4k.jpg', color:'0x154360'},
+            { size: 39.76, label: "Jupiter - 139 000 km", image: 'jupiter.jpg', bumpMap:none, color:'0xf0b27a'},
+            { size: 410.9, label: "Nuestro sol - 1 400 000 km", image:'8k_sun.jpg', bumpMap:'4k_haumea_fictional.jpg', color:'0xcd392b'},
+            { size: 699_000, label: "El sol UY Scuti - 2 400M  km", image:'solar_2.jpg', bumpMap:'4k_haumea_fictional.jpg', color:'0xcd392b'},
+            { size: 5_820_000, label: "Nuestro sistema solar - 134 UA", image: 'starmap_g4k.jpg', bumpMap:none, color:'0x5d6d7e'},
+            { size: 36_440_000, label: "Gargantua - 839 UA", image: 'black_hole.jpg', bumpMap:none, color: '0x17202a'},
+            { size: 29_600_000_000_000, label: "Via lactea - 105 700 anos luz" ,image: 'starmap_g4k.jpg', bumpMap:none, color:'0x5d6d7e'},
+            { size: 2.819e15, label: "Grupo local - 10M anos luz", image: 'grupo_local.jpg', bumpMap:none, color:'0x5d6d7e'},
+            { size: 3.1e16, label: "Superamas de la Virgen - 110M anos luz", image:'galaxy.jpg', bumpMap:none, color:'0x5d6d7e'},
+            { size: 1.4e17, label: "Laniakea - 500M anos luz", image: 'laniakea.jpg', bumpMap:none, color:'0x5d6d7e'},
+
+            { size: 1e19, label: "Todavia estas seguro ?", color:'0xfbfcfc'}
+        ];
+
+        const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1e21 );
+        const renderer = new THREE.WebGLRenderer( { antialias: true, logarithmicDepthBuffer: true } );
+
+
+        function init() {
+
+            cameraControls = new THREE.TrackballControls( camera, renderer.domElement );
+            cameraControls.target.set( 0, 0, 0 );
+
+            const loader = new THREE.FontLoader();
+            loader.load('fonts/helvetiker_regular.typeface.json', function ( font ) {
+
+                scene = initScene(font);
+
+                //We initialize the view
+                scene.add( camera );
+
+                renderer.setPixelRatio( window.devicePixelRatio);
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                document.body.appendChild( renderer.domElement );
+
+                animate(); });
+        
+            stat = new Stats();
+            document.body.appendChild( stat.dom );
+
+
+        }
+
+
+
+        function initScene(font) {
+
+            const scene = new THREE.Scene();
+            scene.add( new THREE.AmbientLight( 0x111111 ) );
+
+            const light = new THREE.DirectionalLight( 0xffffff, 1);
+            light.position.set(100, 100, 100);
+            scene.add(light);
+
+            setGui();
+
+            //Parameters of the text
+            const material_args = {color:0x68767d , specular:0x050505, shininess: 30, emissive:0x000000};
+            
+            //Creation of a sphere
+            const geometry = new THREE.SphereGeometry(0.5, 50, 50);
+
+            //We browse in the elements
+            for ( let i=0; i < elements.length; i++) {
+
+                //Creation of a group to link text and sphere, its position depends on the size of the element
+                var group = new THREE.Group();
+                group.position.z = -elements[i].size*1.8;
+                scene.add(group);
+
+                //If we have a bumpMap to add, we put it
+                if (elements[i].bumpMap != none && i < elements.length - 1) {
+
+                    const material_obj = new THREE.MeshPhongMaterial({
+                        map: new THREE.TextureLoader().load('images/' + elements[i].image),
+                        bumpMap: new THREE.TextureLoader().load('images/' + elements[i].bumpMap),
+                        bumpScale:0.002 }); 
+                    
+                    const dotmesh = new THREE.Mesh( geometry, material_obj);
+                    dotmesh.position.y = - elements[ i ].size / 4 ;
+                    dotmesh.scale.multiplyScalar( elements[ i ].size );
+                    group.add( dotmesh );   }
+                
+                //If not we just add a classique texture
+                else if (i < elements.length - 1) { 
+                    let material_obj;
+                    //Gargantua is a blackhole, therefore we dont want it to reflect light
+                    if (elements[i].label =="Gargantua - 839 UA") {
+                        material_obj = new THREE.MeshStandardMaterial({
+                        map: new THREE.TextureLoader().load('images/' + elements[i].image) }); }
+
+                    else {
+                        material_obj = new THREE.MeshPhongMaterial({
+                        map: new THREE.TextureLoader().load('images/' + elements[i].image) }); }
+
+                    const dotmesh = new THREE.Mesh( geometry, material_obj);
+                    dotmesh.position.y = - elements[ i ].size / 4;
+                    dotmesh.scale.multiplyScalar( elements[ i ].size );
+                    group.add( dotmesh );   }
+                
+                //This condition is useful for the last sentence, without sphere
+                else {}
+                
+                //Each element has its own color, therefore we can create material for the text
+                material_args.color = new THREE.Color().setHex( elements[i].color );
+                const material_text = new THREE.MeshPhongMaterial(material_args);
+
+                //Creation of the label with the right label
+                const label = new THREE.TextGeometry(elements[i].label, {
+                    font:font,
+                    size:elements[i].size/8,
+                    height:elements[i].size/40 });
+
+                // We place the text under the element
+                label.computeBoundingSphere();
+                label.translate(-label.boundingSphere.radius, 0, 0);
+
+                //Creation of the text mesh and we add it to the group
+                const textmesh = new THREE.Mesh(label, material_text);
+                textmesh.position.z = elements[ i ].size/4;
+                textmesh.position.y = elements[ i ].size*0.8 ;
+
+                group.add(textmesh); }
+            
+            return scene; }
+            
+        //Classic animate function
+        function animate() {
+            requestAnimationFrame(animate);
+            render();
+            renderer.render(scene, camera);
+
+        }
+
+
+        //Inspired from https://github.com/mrdoob/three.js/blob/master/examples/webgl_camera_logarithmicdepthbuffer.html
+        function render() {
+
+            if (options.trigger) {
+                options.trigger = false;
+                zoompos = options.zoompos_;
+                minzoomspeed = options.minzoomspeed_;
+                zoomspeed = options.zoomspeed_;
+
+            }
+
+            // Put some limits on zooming
+            const minzoom = 0.1;
+            const maxzoom = elements[ elements.length - 1 ].size;
+            let damping = ( Math.abs( zoomspeed ) > minzoomspeed ? .95 : 1.0 );
+
+            // Zoom out faster the further out you go
+
+            const zoom =  clamp( Math.pow( Math.E, zoompos ), minzoom, maxzoom );
+            zoompos = Math.log( zoom );
+
+            // Slow down quickly at the zoom limits
+            if ( ( zoom == minzoom && zoomspeed < 0 ) || ( zoom == maxzoom && zoomspeed > 0 ) ) {   
+                damping = .85; }
+
+            zoompos += zoomspeed;
+            zoomspeed *= damping;
+
+            camera.position.set(0,0,zoom+0.8);
+            camera.lookAt(scene.position);
+            cameraControls.update();
+            stat.update();
+
+        }
+
+        //To change view when scroll
+        window.addEventListener( 'wheel', function(ev) {
+            const amount = ev.deltaY;
+            if ( amount === 0 ) return;
+            const dir = amount / Math.abs( amount );
+            zoomspeed = dir / 10; 
+		    minzoomspeed = 0.001;} );
+
+        //To resize when the dimensions of the screen change
+        window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+            }, false);
+
+        window.addEventListener('click', function() {camera.position});
+
+
+
+        function setGui () {
+            var gui = new dat.GUI({heigth:100, width:300});
+
+            var folder = gui.addFolder('Options');
+            folder.add(options, 'Volver').name("Volver a la eleccion");
+            folder.add(options, 'reset').name("Reset Animation");
+
+        }
+
+        function clamp(num, min, max) {
+            return num <= min ? min : num >= max ? max : num; }
+
+        
+        init();
+
+        
+    </script>
+
+    <script>
+        $(window).on('load', function() {
+        $('#loading').hide();
+        });
+    </script>
+
+</body>
+
+<div id="loading">
+    <img id="loading-image" src="images/loading.gif" alt="Loading..." />
+</div>
+
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content = "IE=edge">
+    <meta name="viewport" content="width=device-width, inital-scales=1.0">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <title> Le choix </title>
+</head>
+<body>
+
+    </div>
+
+    <style>
+        body {
+            background-color: white;
+            margin: 0px;
+            overflow: hidden;
+            background-image: url(images/galaxy_starfield.png);}
+    </style>
+</head>
+<style>
+    .rectangle{
+        border: 5px black solid;
+        width: 50%;
+        margin: auto;
+        padding: 50px 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;   }
+
+    .button1{
+        display: inline-block;
+        padding: 15px;
+        background-color:white;
+        font-family :  'Montserrat', sans-serif ;
+        font-size: 0.8em;
+        border-radius: 3px;
+        border: 3px grey;
+        width: 200px;
+        margin:2px ;
+        text-align: center;
+    }
+
+    .button1:hover {background-color: #afcee4d5}
+
+    .button1:active {
+        background-color: #8fb7d3d5;
+        box-shadow: 0 2px #666;
+        transform: translateY(2px);
+    }
+
+
+    .button2{
+        display: inline-block;
+        padding: 15px;
+        background-color:white;
+        font-family :  'Montserrat', sans-serif ;
+        font-size: 0.8em;
+        border-radius: 3px;
+        border: 3px grey;
+        width: 200px;
+        margin:2px ;
+        text-align: center;
+    }
+
+    .button2:hover {
+        background-color: #e4b4a2d5;
+    }
+
+    .button2:active {
+        background-color: #dca18cd5;
+        box-shadow: 0 2px #666;
+        transform: translateY(2px);
+    }
+
+
+</style>
+
+
+<body>
+    <div class ="rectangle">
+        <h3>¿Crees en la vida extraterrestre?</h3>
+        <div class = "button-container">
+            <style type="text/css"> 
+                a.nounderline:link { 
+                    text-decoration:none;
+                    } 
+            </style>
+            <div class="button1"><a href="univers.html" class="nounderline"><font color = black>Claro ¡No estamos solos!</font></a></div>
+            <div class="button1"><a href="dezoom.html" class="nounderline"><font color = black>Bueno no ¿estás loco?</font></a></div>
+        </div>
+    </div>
+
+    <script>
+        $(window).on('load', function() {
+        $('#loading').hide();
+        });
+    </script>
+
+</body>
+
+<div id="loading">
+    <img id="loading-image" src="images/loading.gif" alt="Loading..." />
+  </div>
+
+</html>

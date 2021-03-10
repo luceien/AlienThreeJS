@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <title>¿Está seguro?</title>
+</head>
+<body>
+    
+    <div id = "container"></div>
+
+    <!--<script src="lib/three.min_r96.js"></script>-->
+    <script src="lib/three.min.js"></script>
+    <script src="lib/Coordinates.js"></script>
+    <script src="lib/dat.gui.min.js"></script>
+    <script src="lib/tween_18.js"></script>
+
+
+
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
+    <script src = "lib/TrackballControls.js"></script>
+    
+
+    <script type = "module"> 
+
+        import {OBJLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r125/examples/jsm/loaders/OBJLoader.js';
+
+        //Define constants
+        const EARTH_EQUATORIAL_ROTATION_VELOCITY = (4651 * 0.001); // km/s
+        const EARTH_RADIUS = 6371; // km
+        const EARTH_CLOUD_EQUATORIAL_ROTATION_VELOCITY = (EARTH_EQUATORIAL_ROTATION_VELOCITY / 2);
+        const EARTH_CLOUD_RADIUS = (EARTH_RADIUS * 1.02);
+        const MOON_EQUATORIAL_ROTATION_VELOCITY = (4.627 * 0.001); // km/s
+        const MOON_RADIUS = 1737; // km
+
+        const zoomFactor = 0.001;
+        const delta = ((1 / 60) / 86400) * 3600;
+        var theta = 0;
+
+        var mouse = {x:0, y:0};
+        let coords;
+        var click = {moon : false, earth:false};
+        var renderer, scene, camera, earth, earthCloud, moon, raycaster;
+        let text;
+        var controls;
+
+
+
+        //Fonction to create elements
+        const createGalaxy = () => {
+            const texture = new THREE.TextureLoader().load('images/galaxy_starfield.png');
+            texture.minFilter = THREE.LinearFilter;
+
+            const material = new THREE.MeshBasicMaterial({map: texture,
+                                                          side: THREE.BackSide});
+
+            const radius = 200_000;
+            const geometry = new THREE.SphereGeometry(radius * zoomFactor, 32, 32);
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        };
+
+        const createEarth = () => {
+            const texture = new THREE.TextureLoader().load('images/earthmap1k_.jpg')
+
+            const material = new THREE.MeshPhongMaterial({
+                map: texture,
+                bumpMap : new THREE.TextureLoader().load('images/earthbump1k_.jpg'),  
+                bumpScale: 0.5,
+                
+                specularMap: new THREE.TextureLoader().load('images/earthspec1k_.jpg'),
+                specular: new THREE.Color('grey') });
+            
+            const geometry = new THREE.SphereGeometry(EARTH_RADIUS * zoomFactor, 32, 32);
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        };
+    
+        const createEarthCloud = () => {
+            
+            //Inspired from https://riptutorial.com/three-js/example/28900/creating-a-model-earth
+
+            const canvasCloud = document.createElement('canvas');
+            canvasCloud.width = 1024; 
+            canvasCloud.height = 512;
+            const contextCloud = canvasCloud.getContext('2d');
+
+            const imageMap    = new Image();
+            imageMap.addEventListener('load', function() {
+                // Create dataMap ImageData for earthcloudmap
+                const canvasMap = document.createElement('canvas');
+                canvasMap.width = imageMap.width;
+                canvasMap.height = imageMap.height;
+                const contextMap = canvasMap.getContext('2d');
+                contextMap.drawImage(imageMap, 0, 0);
+                const dataMap = contextMap.getImageData(0, 0, canvasMap.width, canvasMap.height);
+
+                // Load earthcloudmaptrans
+                const imageTrans = new Image();
+                imageTrans.addEventListener('load', function () {
+                    // Create dataTrans ImageData for earthcloudmaptrans
+                    const canvasTrans = document.createElement('canvas');
+                    canvasTrans.width = imageTrans.width;
+                    canvasTrans.height = imageTrans.height;
+                    const contextTrans = canvasTrans.getContext('2d');
+                    contextTrans.drawImage(imageTrans, 0, 0);
+                    const dataTrans = contextTrans.getImageData(0, 0, canvasTrans.width, canvasTrans.height);
+
+                    // Merge dataMap + dataTrans into dataResult
+                    const dataResult = contextMap.createImageData(canvasMap.width, canvasMap.height);
+                    for (let y = 0, offset = 0; y < imageMap.height; y++) {
+                        for (let x = 0; x < imageMap.width; x++, offset += 4) {
+                            dataResult.data[offset + 0] = dataMap.data[offset + 0];
+                            dataResult.data[offset + 1] = dataMap.data[offset + 1];
+                            dataResult.data[offset + 2] = dataMap.data[offset + 2];
+                            dataResult.data[offset + 3] = 255 - dataTrans.data[offset + 0];
+                        }
+                    }
+
+                    // Update texture with the result
+                    contextCloud.putImageData(dataResult,0,0);
+                    material.map.needsUpdate = true;
+                });
+                imageTrans.crossOrigin = 'Anonymous';
+                imageTrans.src = 'images/earthcloudmaptrans.jpg';
+
+            }, false);
+            imageMap.crossOrigin = 'Anonymous';
+            imageMap.src = 'images/earthcloudmap.jpg';
+
+            /*const texture = new THREE.TextureLoader().load('images/earthcloudmap.jpg')
+            texture.minFilter = THREE.LinearFilter;*/
+
+            const geometry = new THREE.SphereGeometry(EARTH_CLOUD_RADIUS * zoomFactor, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                map: new THREE.Texture(canvasCloud),
+                side: THREE.DoubleSide,
+                opacity: 0.8,
+                transparent: true,
+                depthWrite: false
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        };
+
+        const createMoon = () => {
+            const geometry = new THREE.SphereGeometry(MOON_RADIUS * zoomFactor, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                map: new THREE.TextureLoader().load('images/moonmap1k.jpg'),
+                bumpMap: new THREE.TextureLoader().load('images/moonbump1k.jpg'),
+                bumpScale: 0.08
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+        return mesh;
+        };
+
+        function createText()  {
+            var loader = new THREE.FontLoader();
+            const textMaterial = new THREE.MeshBasicMaterial({color: 0xffffff});
+            let geometry;
+
+            loader.load('fonts/gentilis_regular.typeface.json',
+                function ( font ) {
+                    const geometry = new THREE.TextGeometry(
+                        'Tal vez deberías comprobar la luna (double-click dos veces)', 
+                        {font: font,
+                        size: 0.2,
+                        height: 0.05,
+                        curveSegments: 0.1 }  );
+                    
+                    const textMesh = new THREE.Mesh(geometry, textMaterial);
+                    textMesh.position.set(-20,10,0);
+                    textMesh.scale.multiplyScalar( EARTH_RADIUS * zoomFactor ); 
+                    scene.add(textMesh); } );
+        };
+
+
+    //Creation of the scene
+
+        function init() {
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.01, 1000);
+            camera.position.set(0,10,120);
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0x888888);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xcccccc, 1);
+            directionalLight.position.set(5,5,5);
+            scene.add(directionalLight);
+
+
+
+            controls = new THREE.TrackballControls(camera, renderer.domElement);
+
+
+            //We add elements of our scene
+            const galaxy = createGalaxy();
+            scene.add(galaxy);
+
+            earth = createEarth();
+            earth.position.set(0,0,0);
+            scene.add(earth);
+
+            earthCloud = createEarthCloud();
+            earthCloud.position.set(earth.position.x, earth.position.y, earth.position.z);
+            scene.add(earthCloud);
+
+            moon = createMoon();
+            moon.position.set(earth.position.x+15, earth.position.y, earth.position.z-15);
+            scene.add(moon);
+
+            createText();
+
+
+            render();
+
+        }
+
+
+        const render = () => {
+            requestAnimationFrame(render);
+            controls.update();
+
+            earth.rotation.y += EARTH_EQUATORIAL_ROTATION_VELOCITY * delta*10;
+            earthCloud.rotation.y += EARTH_CLOUD_EQUATORIAL_ROTATION_VELOCITY * delta*10;
+            moon.rotation.y -= MOON_EQUATORIAL_ROTATION_VELOCITY * delta*1000;
+
+            if (click.moon == false) {
+                theta += delta*10;
+                moon.position.set(20*Math.cos(theta), earth.position.y, 20*Math.sin(theta));
+            }
+
+            TWEEN.update();
+            renderer.render(scene, camera);
+        };
+
+
+        window.addEventListener('click', function() {camera.position});
+
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }, false);
+
+        window.addEventListener('dblclick', function(event) {
+
+            //event.preventDefault();
+            event.stopPropagation();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+   
+            var intersects_moon = raycaster.intersectObject(moon);
+            var intersects_earth = raycaster.intersectObject(earth);
+
+            //If moon has been clicked, 2 scenarios : it's the first time so the camera goes on it or it goes to alien
+
+            if ( intersects_moon.length > 0 ) {   
+
+                if (click.moon == false) {
+                    click.earth = true;
+                    click.moon = true;
+
+                    coords = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+                    new TWEEN.Tween(coords) 
+                        .to({x:40*Math.cos(theta), y: moon.position.y, z: 40*Math.sin(theta)}) 
+                        .onUpdate(() =>
+                            camera.position.set(coords.x, coords.y, coords.z))
+                        .start(); }
+
+                else if (click.moon) {
+                    click.earth = false;
+
+                    coords = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+                    new TWEEN.Tween(coords) 
+                        .to({x:25*Math.cos(theta), y: moon.position.y, z: 25*Math.sin(theta)}) 
+                        .onUpdate(() =>
+                            camera.position.set(coords.x, coords.y, coords.z))
+                        .start(); 
+
+                    setTimeout(() => {  window.location.replace("/danseur.html"); }, 1000); 
+                }
+
+            }
+
+            else if (intersects_earth.length > 0 && click.earth) {
+            
+                if (click.earth) {
+
+                    click.earth = false;
+                    click.moon = false;
+
+                    coords = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+                    new TWEEN.Tween(coords) 
+                        .to({x:0, y:20, z:120}) 
+                        .onUpdate(() =>
+                            camera.position.set(coords.x, coords.y, coords.z))
+                        .start();}
+            
+            }
+
+        }, false);
+
+
+        
+
+        init();
+
+
+
+
+    </script>
+
+    <script>
+        $(window).on('load', function() {
+        $('#loading').hide();
+        });
+    </script>
+    
+</body>
+
+<div id="loading">
+    <img id="loading-image" src="images/loading.gif" alt="Loading..." />
+  </div>
+
+</html>
