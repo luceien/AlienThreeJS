@@ -6,7 +6,8 @@ Para más información sobre su uso y alcance consultar la [wiki](https://github
 
 ## Nota Personal
 
-El trabajo se compone de 4 archivos .html conectados entre ellos, el punto de partida es *paginapersonal.html* y está vinculado a *explore_universe.hmtl* y *check_the_moon.html*.
+El trabajo se compone de **4 archivos** *.html* conectados entre ellos, el punto de partida es *paginapersonal.html* y está vinculado a *explore_universe.html* y *check_the_moon.html*.
 
 Es posible volver a la página inicial a través del objeto *dat.gui* y seleccionar otra ruta.
+
 En la página *check_the_moon.html*, tienes que visitar la luna haciendo doble clic en ella y una segunda vez después de la animación. Esto es necesario para acceder a la última página. Sin embargo, también es posible volver a la visión de la Tierra haciendo doble clic sobre ella.
