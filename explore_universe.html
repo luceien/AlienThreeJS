@@ -36,7 +36,7 @@
 
         let zoompos = - 50, minzoomspeed = .01;
         let zoomspeed =   minzoomspeed;
-        let scene, stat;
+        let scene, stat, audio;
         var cameraControls;
         let none = '';
 
@@ -45,15 +45,18 @@
             minzoomspeed_: .01,
             zoomspeed_: .01,    
             trigger: false,
+            reset_audio:false,
 
             reset: function() {
                 this.trigger = true;
                 this.zoompos_ = -50;
                 this.minzoomspeed_ = .01;
-                this.zoomspeed_ = minzoomspeed_ },
+                this.zoomspeed_ = minzoomspeed_ ;
+                reset_audio = true;
+                },
 
             Volver: function() {
-                window.location.replace('/choix.html'); }
+                window.location.replace('/paginapersonal.html'); }
             };
 
         const elements = [ 
@@ -75,6 +78,9 @@
 
         const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1e21 );
         const renderer = new THREE.WebGLRenderer( { antialias: true, logarithmicDepthBuffer: true } );
+        audio = new Audio('/music/zimmer.mp3');
+        audio.volume = 0.4;
+        audio.play();
 
 
         function init() {
@@ -199,6 +205,9 @@
 
             if (options.trigger) {
                 options.trigger = false;
+                audio.currentTime =0;
+                audio.play();
+                options.reset_audio = false;
                 zoompos = options.zoompos_;
                 minzoomspeed = options.minzoomspeed_;
                 zoomspeed = options.zoomspeed_;
