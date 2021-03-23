@@ -12,4 +12,4 @@ Es posible volver a la página inicial a través del objeto *dat.gui* y seleccio
 
 En la página *check_the_moon.html*, tienes que visitar la luna haciendo doble clic en ella y una segunda vez después de la animación. Esto es necesario para acceder a la última página. Sin embargo, también es posible volver a la visión de la Tierra haciendo doble clic sobre ella.
 
-#Demo : [click here](https://github.com/luceien/luceien.github.io/paginapersonal.html)
+## Demo : [click here](https://github.io/luceien/luceien.github.io/paginapersonal.html)
